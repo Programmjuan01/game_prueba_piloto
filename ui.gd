@@ -6,27 +6,26 @@ extends Control
 @onready var join_button: Button = $VBoxContainer/JoinButton
 
 func _ready():
-	ip_input.text = "127.0.0.1"
+	ip_input.text = "192.168.7.3"
+	# No hay servidor Godot: todos conectan al relay → ocultar botón Host
+	host_button.hide()
+	status_label.text = "Ingresa la IP del servidor y une"
 
+# Llamado desde main.gd cuando se detecta OS.get_name() == "Web"
+# (ya no necesario, pero se mantiene por compatibilidad)
 func set_web_mode():
 	host_button.hide()
 	status_label.text = "Ingresa la IP del servidor"
 
 func on_connection_failed():
-	status_label.text = "No se pudo conectar. Verifica la IP."
+	status_label.text = "No se pudo conectar. Verifica la IP y que el servidor esté activo."
 	join_button.disabled = false
-
-func _on_host_button_pressed():
-	status_label.text = "Iniciando servidor..."
-	host_button.disabled = true
-	join_button.disabled = true
-	get_node("/root/Main").host_game()
 
 func _on_join_button_pressed():
 	var ip = ip_input.text.strip_edges()
 	if ip.is_empty():
 		status_label.text = "Ingresa una IP válida"
 		return
-	status_label.text = "Conectando..."
+	status_label.text = "Conectando a " + ip + "..."
 	join_button.disabled = true
 	get_node("/root/Main").join_game(ip)
