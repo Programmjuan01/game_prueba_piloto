@@ -13,9 +13,10 @@ html, body, #canvas {
 
 body {
 	color: white;
-	background-color: black;
+	background-color: #060a10;
 	overflow: hidden;
 	touch-action: none;
+	font-family: 'Segoe UI', 'Noto Sans', Arial, sans-serif;
 }
 
 #canvas {
@@ -38,11 +39,12 @@ body {
 }
 
 #status {
-	background-color: #242424;
+	background: linear-gradient(160deg, #060a10 0%, #0c1428 60%, #060a10 100%);
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	gap: 18px;
 	visibility: hidden;
 }
 
@@ -70,23 +72,71 @@ body {
 	display: none;
 }
 
+#status-title {
+	font-size: 2rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	color: #ddeaff;
+	text-shadow: 0 0 24px rgba(80, 140, 255, 0.6);
+	margin-bottom: 4px;
+}
+
+#status-subtitle {
+	font-size: 0.85rem;
+	color: #5a78b8;
+	letter-spacing: 0.08em;
+	margin-top: -8px;
+}
+
 #status-progress {
-	bottom: 10%;
-	width: 50%;
-	margin: 0 auto;
+	position: relative;
+	bottom: auto;
+	width: 320px;
+	height: 6px;
+	margin: 4px auto;
+	-webkit-appearance: none;
+	appearance: none;
+	border: none;
+	border-radius: 3px;
+	background: rgba(255,255,255,0.08);
+	overflow: hidden;
+}
+
+#status-progress::-webkit-progress-bar {
+	background: rgba(255,255,255,0.08);
+	border-radius: 3px;
+}
+
+#status-progress::-webkit-progress-value {
+	background: linear-gradient(90deg, #2a6be0, #4fa3ff);
+	border-radius: 3px;
+	transition: width 0.2s ease;
+}
+
+#status-progress::-moz-progress-bar {
+	background: linear-gradient(90deg, #2a6be0, #4fa3ff);
+	border-radius: 3px;
+}
+
+#status-loading-text {
+	font-size: 0.78rem;
+	color: #3a5888;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
 #status-notice {
-	background-color: #5b3943;
-	border-radius: 0.5rem;
-	border: 1px solid #9b3943;
-	color: #e0e0e0;
-	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
-	line-height: 1.3;
+	background-color: #2a1520;
+	border-radius: 0.6rem;
+	border: 1px solid #7b2535;
+	color: #e0dde8;
+	font-size: 0.9rem;
+	line-height: 1.4;
 	margin: 0 2rem;
 	overflow: hidden;
-	padding: 1rem;
+	padding: 1rem 1.5rem;
 	text-align: center;
+	max-width: 480px;
 	z-index: 1;
 }
 		</style>
@@ -104,8 +154,11 @@ body {
 		</noscript>
 
 		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="game_online.png" alt="">
+			<img id="status-splash" class="show-image--false fullsize--true use-filter--true" src="game_online.png" alt="">
+			<div id="status-title">ARENA ONLINE</div>
+			<div id="status-subtitle">Multijugador en tiempo real</div>
 			<progress id="status-progress"></progress>
+			<div id="status-loading-text">Cargando...</div>
 			<div id="status-notice"></div>
 		</div>
 

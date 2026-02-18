@@ -3,6 +3,71 @@
 [ext_resource type="Script" uid="uid://bm7wemvcc4mi0" path="res://main.gd" id="1"]
 [ext_resource type="Script" uid="uid://c70iedfnpu2an" path="res://ui.gd" id="2"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.09, 0.11, 0.17, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.35, 0.72, 0.7)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+content_margin_left = 36.0
+content_margin_right = 36.0
+content_margin_top = 36.0
+content_margin_bottom = 36.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.18, 0.44, 0.92, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.3, 0.55, 1.0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+bg_color = Color(0.12, 0.32, 0.78, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_input"]
+bg_color = Color(0.05, 0.07, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.32, 0.58, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_right = 12.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+
 [node name="Main" type="Node" unique_id=596476363]
 script = ExtResource("1")
 
@@ -22,65 +87,78 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.12, 0.12, 0.15, 1)
+color = Color(0.055, 0.065, 0.1, 1)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI" unique_id=27705096]
+[node name="CenterContainer" type="CenterContainer" parent="UI"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -120.0
-offset_right = 150.0
-offset_bottom = 120.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="UI/VBoxContainer" unique_id=15186034]
+[node name="Panel" type="PanelContainer" parent="UI/CenterContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
-text = "PT_PRUEBA_SERVIDOR"
+custom_minimum_size = Vector2(400, 0)
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/CenterContainer/Panel" unique_id=27705096]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TitleLabel" type="Label" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=15186034]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.88, 0.93, 1.0, 1)
+text = "ARENA ONLINE"
 horizontal_alignment = 1
 
-[node name="SubtitleLabel" type="Label" parent="UI/VBoxContainer" unique_id=1500297077]
+[node name="SubtitleLabel" type="Label" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=1500297077]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-text = "Prototipo Multijugador LAN"
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.42, 0.58, 0.85, 1)
+text = "Multijugador en tiempo real"
 horizontal_alignment = 1
 
-[node name="Separator" type="HSeparator" parent="UI/VBoxContainer" unique_id=182044705]
+[node name="Separator" type="HSeparator" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=182044705]
 layout_mode = 2
+theme_override_colors/separator_color = Color(0.2, 0.35, 0.7, 0.35)
+theme_override_constants/separation = 4
 
-[node name="HostButton" type="Button" parent="UI/VBoxContainer" unique_id=1202026131]
-custom_minimum_size = Vector2(300, 48)
+[node name="IPLabel" type="Label" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=925763181]
 layout_mode = 2
-text = "🖥  CREAR SERVIDOR (Host)"
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.55, 0.68, 0.88, 1)
+text = "IP del servidor"
 
-[node name="Separator2" type="HSeparator" parent="UI/VBoxContainer" unique_id=2027403434]
+[node name="IPInput" type="LineEdit" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=2078375649]
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-
-[node name="IPLabel" type="Label" parent="UI/VBoxContainer" unique_id=925763181]
-layout_mode = 2
-text = "IP del host:"
-
-[node name="IPInput" type="LineEdit" parent="UI/VBoxContainer" unique_id=2078375649]
-custom_minimum_size = Vector2(300, 36)
-layout_mode = 2
-text = "127.0.0.1"
+theme_override_styles/normal = SubResource("StyleBoxFlat_input")
+theme_override_font_sizes/font_size = 15
+text = "192.168.7.3"
 placeholder_text = "Ej: 192.168.1.10"
 
-[node name="JoinButton" type="Button" parent="UI/VBoxContainer" unique_id=694784350]
-custom_minimum_size = Vector2(300, 48)
+[node name="HostButton" type="Button" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=1202026131]
+visible = false
 layout_mode = 2
-text = "🎮  UNIRSE AL SERVIDOR"
+text = "HOST"
 
-[node name="StatusLabel" type="Label" parent="UI/VBoxContainer" unique_id=1659085936]
+[node name="JoinButton" type="Button" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=694784350]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.4, 0.9, 0.4, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "UNIRSE AL SERVIDOR"
+
+[node name="StatusLabel" type="Label" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=1659085936]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.38, 0.84, 0.44, 1)
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[connection signal="pressed" from="UI/VBoxContainer/HostButton" to="UI" method="_on_host_button_pressed"]
-[connection signal="pressed" from="UI/VBoxContainer/JoinButton" to="UI" method="_on_join_button_pressed"]
+[connection signal="pressed" from="UI/CenterContainer/Panel/VBoxContainer/JoinButton" to="UI" method="_on_join_button_pressed"]
