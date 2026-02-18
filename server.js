@@ -4,7 +4,9 @@ const path = require('path');
 const forge = require('node-forge');
 const WebSocket = require('ws');
 
-const PORT = 8080;
+const HTTP_PORT = 8080;
+const GODOT_HOST = '127.0.0.1';
+const GODOT_PORT = 7777;
 
 // --- Certificado auto-firmado compatible con Chrome ---
 const keys = forge.pki.rsa.generateKeyPair(2048);
@@ -39,7 +41,7 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
 };
 
-// --- Servidor HTTPS para archivos estáticos ---
+// --- Servidor HTTPS para archivos estáticos del juego ---
 const httpsServer = https.createServer({ key: keyPem, cert: certPem }, (req, res) => {
     let filePath = '.' + req.url;
     if (filePath === './') filePath = './game_online.html';
@@ -61,61 +63,68 @@ const httpsServer = https.createServer({ key: keyPem, cert: certPem }, (req, res
     });
 });
 
-// --- Relay WebSocket para Godot 4 WebSocketMultiplayerPeer ---
-// Protocolo:
-//   Conexión nueva → servidor envía peer_id (int32 little-endian, 4 bytes)
-//   Paquetes de datos → se reenvían a TODOS los demás peers conectados
-//   Desconexión → se cierra y elimina el peer
-
+// --- Proxy WSS → WS hacia servidor Godot dedicado ---
+//
+// El navegador no puede conectar a ws:// desde una página HTTPS (mixed content).
+// Este proxy actúa como terminador TLS: acepta wss://IP:8080 del browser
+// y lo reenvía como ws://localhost:7777 al servidor Godot headless.
+//
+// Flujo:
+//   Browser --wss:8080--> [Node.js proxy] --ws:7777--> [Godot headless]
+//
 const wss = new WebSocket.Server({ noServer: true, perMessageDeflate: false });
 
-let nextPeerId = 2; // Godot reserva 1 para el servidor
-const peers = new Map(); // peerId -> ws
+wss.on('connection', (clientWs) => {
+    const godotUrl = `ws://${GODOT_HOST}:${GODOT_PORT}`;
+    const godotWs = new WebSocket(godotUrl, { perMessageDeflate: false });
 
-function sendPeerId(ws, peerId) {
-    const buf = Buffer.allocUnsafe(4);
-    buf.writeInt32LE(peerId, 0);
-    ws.send(buf);
-}
+    godotWs.on('open', () => {
+        console.log('[Proxy] Cliente conectado → Godot server');
 
-wss.on('connection', (ws) => {
-    const peerId = nextPeerId++;
-    peers.set(peerId, ws);
-    ws._peerId = peerId;
-
-    console.log(`[Relay] Peer ${peerId} conectado. Total: ${peers.size}`);
-
-    // Enviar ID al cliente (protocolo Godot 4)
-    sendPeerId(ws, peerId);
-
-    ws.on('message', (data, isBinary) => {
-        // Reenviar a todos los demás peers lo antes posible (sin procesar)
-        for (const [id, peer] of peers) {
-            if (id !== peerId && peer.readyState === WebSocket.OPEN) {
-                peer.send(data, { binary: true });
+        // Browser → Godot
+        clientWs.on('message', (data) => {
+            if (godotWs.readyState === WebSocket.OPEN) {
+                godotWs.send(data, { binary: true });
             }
+        });
+
+        // Godot → Browser
+        godotWs.on('message', (data) => {
+            if (clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(data, { binary: true });
+            }
+        });
+
+        clientWs.on('close', () => {
+            if (godotWs.readyState === WebSocket.OPEN) godotWs.close();
+        });
+
+        godotWs.on('close', () => {
+            if (clientWs.readyState === WebSocket.OPEN) clientWs.close();
+        });
+    });
+
+    godotWs.on('error', (err) => {
+        console.error(`[Proxy] No se pudo conectar al servidor Godot (${godotUrl}):`, err.message);
+        console.error('        Asegúrate de que el servidor Godot está corriendo en el puerto', GODOT_PORT);
+        if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.close(1013, 'Servidor de juego no disponible');
         }
-    });
-
-    ws.on('close', () => {
-        peers.delete(peerId);
-        console.log(`[Relay] Peer ${peerId} desconectado. Total: ${peers.size}`);
-    });
-
-    ws.on('error', (err) => {
-        console.error(`[Relay] Error en peer ${peerId}:`, err.message);
-        peers.delete(peerId);
     });
 });
 
-// Interceptar upgrade HTTP → WebSocket (mismo puerto 8080)
+// Interceptar upgrade HTTP → WebSocket en el mismo puerto 8080
 httpsServer.on('upgrade', (req, socket, head) => {
     wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit('connection', ws, req);
     });
 });
 
-httpsServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor HTTPS + WSS en https://192.168.7.3:${PORT}`);
-    console.log(`Relay WebSocket activo en wss://192.168.7.3:${PORT}`);
+httpsServer.listen(HTTP_PORT, '0.0.0.0', () => {
+    console.log(`\nServidor HTTPS (archivos): https://192.168.7.3:${HTTP_PORT}`);
+    console.log(`Proxy WSS → WS:            wss://192.168.7.3:${HTTP_PORT} → ws://localhost:${GODOT_PORT}`);
+    console.log('\nPara jugar:');
+    console.log('  1. Ejecutar servidor Godot headless (puerto 7777)');
+    console.log('  2. Abrir https://192.168.7.3:8080 en el navegador');
+    console.log('  3. Ingresar IP del servidor y hacer clic en "Unirse"\n');
 });

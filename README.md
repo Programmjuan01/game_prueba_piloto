@@ -1,15 +1,17 @@
-<<<<<<< HEAD
 # PT_PRUEBA_V3 — Servidor Dedicado + Clientes HTML5
 
 ## Arquitectura
 
 ```
-[Servidor Dedicado - headless]   ← corre en tu PC o Hetzner
+[Servidor Dedicado Godot - headless, puerto 7777]
+         ↑            ↑
+   [Node.js proxy, puerto 8080]   ← termina TLS, reenvía a Godot
          ↑            ↑
   [Browser A]    [Browser B]     ← cualquier usuario con Chrome
 ```
 
-El servidor NO tiene ventana ni UI. Solo maneja red y lógica.
+El servidor Godot NO tiene ventana ni UI. Solo maneja red y lógica.
+El Node.js proxy actúa como terminador TLS: los browsers solo pueden usar `wss://` desde páginas HTTPS; el proxy recibe `wss://IP:8080` y lo reenvía como `ws://localhost:7777` al servidor Godot.
 Los clientes son 100% navegador — no necesitan instalar nada.
 
 ---
@@ -27,19 +29,21 @@ Los clientes son 100% navegador — no necesitan instalar nada.
 
 ---
 
-## Cómo correr el servidor dedicado
+## Cómo correr el servidor
 
-### Opción A — Desde el editor de Godot (para pruebas)
+### Paso 1 — Iniciar servidor Godot (headless)
+
+#### Opción A — Desde el editor de Godot (para pruebas)
 ```
 Godot.exe --path "ruta/al/proyecto" --headless
 ```
 
-### Opción B — Desde ejecutable exportado Windows
+#### Opción B — Desde ejecutable exportado Windows
 ```powershell
 PT_PRUEBA_V3.exe --headless
 ```
 
-### Opción C — Desde ejecutable exportado Linux (Hetzner)
+#### Opción C — Desde ejecutable exportado Linux (Hetzner)
 ```bash
 ./PT_PRUEBA_V3.x86_64 --headless
 ```
@@ -50,38 +54,36 @@ Al arrancar en modo headless verás:
 Servidor WebSocket escuchando en puerto 7777
 ```
 
----
-
-## Cómo correr el servidor HTTP para los clientes
-
-En la carpeta con los archivos HTML exportados:
+### Paso 2 — Iniciar el proxy/servidor HTTP (Node.js)
 
 ```powershell
 node server.js
 ```
 
-O con Python:
-```powershell
-python3 -m http.server 8080 --bind 0.0.0.0
+Verás:
+```
+Servidor HTTPS (archivos): https://192.168.7.3:8080
+Proxy WSS → WS:            wss://192.168.7.3:8080 → ws://localhost:7777
 ```
 
 ---
 
 ## Flujo completo de prueba LAN
 
-1. **Terminal 1** — Inicia el servidor del juego:
+1. **Terminal 1** — Inicia el servidor Godot:
    ```
    Godot.exe --path "ruta/proyecto" --headless
    ```
 
-2. **Terminal 2** — Inicia el servidor HTTP:
+2. **Terminal 2** — Inicia el proxy Node.js:
    ```
-   cd carpeta_export_html && node server.js
+   node server.js
    ```
 
 3. **Cualquier navegador en la red**:
    - Abre `https://192.168.7.3:8080`
-   - Ingresa `192.168.7.3` como IP
+   - Acepta el certificado auto-firmado (botón "Avanzado" → "Continuar")
+   - Ingresa `192.168.7.3` como IP del servidor
    - Clic en "Unirse"
 
 ---
@@ -89,10 +91,11 @@ python3 -m http.server 8080 --bind 0.0.0.0
 ## Puertos
 | Puerto | Uso |
 |--------|-----|
-| 7777 TCP | WebSocket del juego (servidor dedicado) |
-| 8080 TCP | Servidor HTTP para el HTML5 |
+| 7777 TCP | WebSocket del juego (servidor Godot headless) |
+| 8080 TCP | HTTPS + proxy WSS (Node.js) |
 
 ```powershell
+# Windows Firewall
 netsh advfirewall firewall add rule name="Godot Game" dir=in action=allow protocol=TCP localport=7777
 netsh advfirewall firewall add rule name="Godot HTTP" dir=in action=allow protocol=TCP localport=8080
 ```
@@ -101,10 +104,19 @@ netsh advfirewall firewall add rule name="Godot HTTP" dir=in action=allow protoc
 
 ## Para subir a Hetzner (próximo paso)
 1. Crea VPS Linux en Hetzner (€4-6/mes)
-2. Sube el ejecutable Linux headless
+2. Sube el ejecutable Linux headless + carpeta con archivos web
 3. Corre: `./PT_PRUEBA_V3.x86_64 --headless &`
-4. Sirve el HTML con nginx o el server.js
+4. Corre: `node server.js &`
 5. Los jugadores acceden por IP pública del VPS
-=======
-# game_prueba_piloto
->>>>>>> 0d396657f9494416587eb1e03d8ebc87bf33c940
+
+---
+
+## Sync de movimiento (qué se mejoró)
+
+| Antes | Después |
+|-------|---------|
+| Solo sincronizaba `position` | Sincroniza `_net_position` + `_net_velocity` |
+| `replication_interval` = 0.1s (10 Hz) | `replication_interval` = 0.0 (cada physics frame) |
+| Posición remota saltaba bruscamente | Interpolación suave + extrapolación con velocidad |
+| URL `ws://` bloqueada por Chrome | Proxy `wss://` en puerto 8080 |
+| Código duplicado en servidor dedicado | Limpiado |

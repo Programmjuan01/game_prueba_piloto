@@ -37,21 +37,6 @@ func start_dedicated_server():
 		get_node("UI").hide()
 	load_game_scene()
 	# NO agregar jugador ID:1 — el servidor no es un jugador
-	
-	
-	multiplayer.multiplayer_peer = peer
-	print("Servidor WebSocket escuchando en puerto ", PORT)
-	if has_node("UI"):
-		get_node("UI").hide()
-	load_game_scene()
-	# NO agregar jugador ID:1 — el servidor no es un jugador
-	multiplayer.multiplayer_peer = peer
-	print("Servidor WebSocket escuchando en puerto ", PORT)
-	# Ocultar UI (no existe en headless)
-	if has_node("UI"):
-		get_node("UI").hide()
-	# Cargar escena de juego directamente
-	load_game_scene()
 
 # ──────────────────────────────────────────
 #  HOST desde editor/ejecutable con ventana
@@ -64,7 +49,6 @@ func host_game():
 		return
 	multiplayer.multiplayer_peer = peer
 	print("Servidor WebSocket iniciado en puerto ", PORT)
-	
 	load_game_scene()
 
 # ──────────────────────────────────────────
@@ -72,7 +56,17 @@ func host_game():
 # ──────────────────────────────────────────
 func join_game(ip: String):
 	var peer = WebSocketMultiplayerPeer.new()
-	var url = "ws://" + ip + ":" + str(PORT)
+	var url: String
+
+	if OS.get_name() == "Web":
+		# Desde el navegador: el proxy HTTPS (node server.js) escucha en el
+		# mismo puerto 8080 y reenvía al servidor Godot en 7777.
+		# wss:// es obligatorio desde páginas HTTPS (ws:// es bloqueado).
+		url = "wss://" + ip + ":8080"
+	else:
+		# Nativo (editor, ejecutable): conectar directo al servidor Godot
+		url = "ws://" + ip + ":" + str(PORT)
+
 	var err = peer.create_client(url)
 	if err != OK:
 		print("Error al conectar: ", err)
