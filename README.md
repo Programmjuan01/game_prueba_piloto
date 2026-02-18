@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PT_PRUEBA_V3 — Servidor Dedicado + Clientes HTML5
 
 ## Arquitectura
@@ -104,3 +105,6 @@ netsh advfirewall firewall add rule name="Godot HTTP" dir=in action=allow protoc
 3. Corre: `./PT_PRUEBA_V3.x86_64 --headless &`
 4. Sirve el HTML con nginx o el server.js
 5. Los jugadores acceden por IP pública del VPS
+=======
+# game_prueba_piloto
+>>>>>>> 0d396657f9494416587eb1e03d8ebc87bf33c940
