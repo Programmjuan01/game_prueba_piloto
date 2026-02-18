@@ -7,7 +7,7 @@ extends Control
 @onready var join_button:  Button   = $CenterContainer/Panel/VBoxContainer/JoinButton
 
 func _ready():
-	ip_input.text = "192.168.7.3"
+	ip_input.text = "10.107.13.35"
 	status_label.text = "Ingresa la IP del servidor y pulsa Unirse"
 
 func on_connection_failed():

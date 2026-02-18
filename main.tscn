@@ -136,7 +136,7 @@ custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_input")
 theme_override_font_sizes/font_size = 15
-text = "192.168.7.3"
+text = "10.107.13.35"
 placeholder_text = "Ej: 192.168.1.10"
 
 [node name="HostButton" type="Button" parent="UI/CenterContainer/Panel/VBoxContainer" unique_id=1202026131]
