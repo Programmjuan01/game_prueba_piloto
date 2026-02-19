@@ -15,13 +15,28 @@ cert.validity.notBefore = new Date();
 cert.validity.notAfter = new Date();
 cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
 
-const attrs = [{ name: 'commonName', value: '192.168.7.3' }];
+// Detectar IP local automáticamente
+const os = require('os');
+function getLocalIP() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+const LOCAL_IP = process.env.SERVER_IP || getLocalIP();
+
+const attrs = [{ name: 'commonName', value: LOCAL_IP }];
 cert.setSubject(attrs);
 cert.setIssuer(attrs);
 cert.setExtensions([
     { name: 'basicConstraints', cA: true },
     { name: 'subjectAltName', altNames: [
-        { type: 7, ip: '192.168.7.3' },
+        { type: 7, ip: LOCAL_IP },
         { type: 2, value: 'localhost' }
     ]}
 ]);
@@ -202,8 +217,8 @@ httpsServer.on('upgrade', (req, socket, head) => {
 
 httpsServer.listen(HTTP_PORT, '0.0.0.0', () => {
     console.log(`\n=== Servidor listo ===`);
-    console.log(`HTTPS (archivos): https://192.168.7.3:${HTTP_PORT}`);
-    console.log(`WSS  (relay):     wss://192.168.7.3:${HTTP_PORT}`);
+    console.log(`HTTPS (archivos): https://${LOCAL_IP}:${HTTP_PORT}`);
+    console.log(`WSS  (relay):     wss://${LOCAL_IP}:${HTTP_PORT}`);
     console.log(`\nNo se necesita servidor Godot headless.`);
-    console.log(`Abrir https://192.168.7.3:${HTTP_PORT} en el navegador.\n`);
+    console.log(`Abrir https://${LOCAL_IP}:${HTTP_PORT} en el navegador.\n`);
 });
