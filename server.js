@@ -55,6 +55,29 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
 };
 
+// Script que se inyecta en el HTML para interceptar conexiones WebSocket del juego.
+// Redirige cualquier ws://127.0.0.1 o ws://localhost al servidor real (esta máquina).
+const WS_INTERCEPTOR = `
+<script>
+(function() {
+    var _Orig = window.WebSocket;
+    function PatchedWS(url, protocols) {
+        var fixed = url.replace(
+            /^ws:\\/\\/(127\\.0\\.0\\.1|localhost)(:\\d+)?/,
+            'wss://' + window.location.hostname + ':${HTTP_PORT}'
+        );
+        if (fixed !== url) console.log('[WS patch]', url, '\\u2192', fixed);
+        return protocols !== undefined ? new _Orig(fixed, protocols) : new _Orig(fixed);
+    }
+    PatchedWS.prototype = _Orig.prototype;
+    PatchedWS.CONNECTING = _Orig.CONNECTING;
+    PatchedWS.OPEN       = _Orig.OPEN;
+    PatchedWS.CLOSING    = _Orig.CLOSING;
+    PatchedWS.CLOSED     = _Orig.CLOSED;
+    window.WebSocket = PatchedWS;
+})();
+<\\/script>`;
+
 const httpsServer = https.createServer({ key: keyPem, cert: certPem }, (req, res) => {
     let filePath = '.' + req.url;
     if (filePath === './') filePath = './game_online.html';
@@ -64,8 +87,18 @@ const httpsServer = https.createServer({ key: keyPem, cert: certPem }, (req, res
     res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
     fs.readFile(filePath, (err, data) => {
         if (err) { res.writeHead(404); res.end('Not found: ' + filePath); return; }
-        res.writeHead(200, { 'Content-Type': contentType });
-        res.end(data);
+        // Inyectar interceptor en el HTML antes de que cargue game_online.js
+        if (filePath.endsWith('.html')) {
+            const html = data.toString().replace(
+                '<script src="game_online.js"></script>',
+                WS_INTERCEPTOR + '\n\t\t<script src="game_online.js"></script>'
+            );
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(html);
+        } else {
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(data);
+        }
     });
 });
 
